@@ -1,66 +1,62 @@
 const express = require('express');
-const Razorpay = require('razorpay');
-const crypto = require('crypto');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const connectDB = require('./config/db');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 4242;
 
-app.use(cors());
-// For webhook verification you need raw body. We only accept JSON for our simple endpoints.
+// CORS Configuration
+const allowedOrigins = [
+  'http://localhost:8080',
+  'http://localhost:5173',
+  'http://localhost:3000',
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn('CORS blocked request', { origin });
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(bodyParser.json());
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET
+// Connect to Database
+connectDB();
+
+// Import Routes
+const authRoutes = require('./routes/auth');
+const razorpayRoutes = require('./routes/razorpay');
+const adminRoutes = require('./routes/admin');
+const emailRoutes = require('./routes/email');
+
+// Register Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/razorpay', razorpayRoutes);
+app.use('/api/admin', adminRoutes); 
+app.use('/api/email', emailRoutes);
+
+
+// Health Check Route
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Server is running',
+    timestamp: new Date().toISOString()
+  });
 });
 
-app.post('/api/razorpay/order', async (req, res) => {
-  try {
-    const { amount, currency = 'INR', donationType, paymentMethod } = req.body;
-    if (!amount || amount <= 0) return res.status(400).send('Invalid amount');
-
-    const options = {
-      amount: amount,
-      currency: currency,
-      receipt: `donation_${Date.now()}`,
-      payment_capture: 1
-    };
-
-    const order = await razorpay.orders.create(options);
-
-    res.json({ orderId: order.id, amount: order.amount, currency: order.currency, keyId: process.env.RAZORPAY_KEY_ID });
-  } catch (err) {
-    console.error('Order creation error', err);
-    res.status(500).send('Could not create order');
-  }
-});
-
-app.post('/api/razorpay/verify', async (req, res) => {
-  try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-      return res.status(400).send('Missing parameters');
-    }
-
-    const generated_signature = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
-      .update(razorpay_order_id + '|' + razorpay_payment_id)
-      .digest('hex');
-
-    if (generated_signature === razorpay_signature) {
-      // TODO: record donation in DB, send receipt email, etc.
-      return res.send('ok');
-    } else {
-      return res.status(400).send('Invalid signature');
-    }
-  } catch (err) {
-    console.error('Verification error', err);
-    res.status(500).send('Verification failed');
-  }
-});
-
+// Start Server
 app.listen(PORT, () => {
-  console.log(`Razorpay server listening on port ${PORT}`);
+  console.log(`🚀 Server listening on port ${PORT}`);
 });
