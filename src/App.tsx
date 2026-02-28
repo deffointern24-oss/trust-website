@@ -18,6 +18,7 @@ import Shipping from "./pages/Shipping";
 import CancellationRefunds from "./pages/CancellationRefunds";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import PaymentSuccess from "./pages/PaymentSuccess";
 
@@ -48,6 +49,7 @@ const App = () => (
           <Route path="/transparency" element={<Transparency />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

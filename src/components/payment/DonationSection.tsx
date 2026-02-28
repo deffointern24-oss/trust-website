@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,10 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Heart, CreditCard, Smartphone, Building2, Gift, Shield, Star } from "lucide-react";
+import { Heart, CreditCard, Smartphone, Building2, Gift, Shield, Star, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from 'react-router-dom';
 import { useApi } from '../../lib/api'
+import { formatDistanceToNow } from 'date-fns';
+
 const DonationSection = () => {
   const [donationAmount, setDonationAmount] = useState("1000");
   const [customAmount, setCustomAmount] = useState("");
@@ -18,8 +20,24 @@ const DonationSection = () => {
   const { toast } = useToast();
   const [processing, setProcessing] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [recentDonations, setRecentDonations] = useState<any[]>([]);
   const navigate = useNavigate();
-  const { post } = useApi();
+  const { post, get } = useApi();
+
+  useEffect(() => {
+    const fetchRecentDonations = async () => {
+      try {
+        const response = await get('/donations/recent');
+        if (response.data.success) {
+          setRecentDonations(response.data.donations);
+        }
+      } catch (error) {
+        console.error('Error fetching recent donations:', error);
+      }
+    };
+
+    fetchRecentDonations();
+  }, [get]);
 
   const predefinedAmounts = [
     { value: "500", label: "₹500", impact: "Supports 1 student's books for a month" },
@@ -75,7 +93,7 @@ const DonationSection = () => {
       }
 
 
-      const response =await post('/razorpay/anonymous/order', { 
+      const response = await post('/razorpay/anonymous/order', {
         amount: amountPaise,
         currency: 'INR',
         donationType,
@@ -107,7 +125,7 @@ const DonationSection = () => {
           // response: { razorpay_payment_id, razorpay_order_id, razorpay_signature }
           try {
             // Verify payment using useApi hook
-            const verifyResponse = await  post('/razorpay/anonymous/verify', {
+            const verifyResponse = await post('/razorpay/anonymous/verify', {
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_order_id: response.razorpay_order_id,
               razorpay_signature: response.razorpay_signature
@@ -375,19 +393,36 @@ const DonationSection = () => {
               </CardContent>
             </Card>
 
-            {/* Recent Donor */}
+            {/* Recent Donors List */}
             <Card className="card-shadow border-0">
               <CardContent className="p-6">
-                <h3 className="font-bold text-primary mb-4">Recent Supporter</h3>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-light rounded-full flex items-center justify-center text-white font-bold">
-                    A
-                  </div>
-                  <div>
-                    <div className="font-medium">Anonymous Donor</div>
-                    <div className="text-sm text-muted-foreground">Donated ₹5,000</div>
-                    <div className="text-xs text-muted-foreground">2 hours ago</div>
-                  </div>
+                <div className="flex items-center gap-2 mb-4">
+                  <Users className="w-5 h-5 text-secondary" />
+                  <h3 className="font-bold text-primary">Recent Supporters</h3>
+                </div>
+
+                <div className="space-y-4">
+                  {recentDonations.length > 0 ? (
+                    recentDonations.map((donation, index) => (
+                      <div key={index} className="flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500" style={{ animationDelay: `${index * 100}ms` }}>
+                        <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-light rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                          {donation.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <div className="font-medium text-sm truncate">{donation.name}</div>
+                          <div className="text-xs text-muted-foreground flex items-center gap-1">
+                            <span className="font-semibold text-trust-green">₹{donation.amount.toLocaleString('en-IN')}</span>
+                            <span className="opacity-50">•</span>
+                            <span>{formatDistanceToNow(new Date(donation.paidAt))} ago</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-sm text-muted-foreground text-center py-4 bg-gray-50 rounded-lg">
+                      Be our first supporter today!
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

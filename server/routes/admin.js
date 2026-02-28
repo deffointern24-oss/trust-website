@@ -387,4 +387,113 @@ router.get('/reports/donation-types', async (req, res) => {
   }
 });
 
+// Export Donations to Excel
+router.get('/export/donations', async (req, res) => {
+  try {
+    const ExcelJS = require('exceljs');
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Donations');
+
+    worksheet.columns = [
+      { header: 'Order ID', key: 'orderId', width: 25 },
+      { header: 'Payment ID', key: 'paymentId', width: 25 },
+      { header: 'Donor Name', key: 'donorName', width: 20 },
+      { header: 'Email', key: 'email', width: 25 },
+      { header: 'Phone', key: 'phone', width: 15 },
+      { header: 'Amount (INR)', key: 'amount', width: 15 },
+      { header: 'Status', key: 'status', width: 15 },
+      { header: 'Type', key: 'type', width: 15 },
+      { header: 'Method', key: 'method', width: 15 },
+      { header: 'Date', key: 'date', width: 20 },
+      { header: 'Certificate Issued', key: 'certIssued', width: 15 },
+      { header: 'Certificate Number', key: 'certNo', width: 25 }
+    ];
+
+    const donations = await Donation.find()
+      .populate('donor', 'name email phone')
+      .sort({ createdAt: -1 });
+
+    donations.forEach(d => {
+      worksheet.addRow({
+        orderId: d.razorpay_order_id,
+        paymentId: d.razorpay_payment_id || 'N/A',
+        donorName: d.donor?.name || d.donorSnapshot?.name || 'Anonymous',
+        email: d.donor?.email || d.donorSnapshot?.email || 'N/A',
+        phone: d.donor?.phone || d.donorSnapshot?.phone || 'N/A',
+        amount: d.amount / 100,
+        status: d.paymentStatus,
+        type: d.donationType,
+        method: d.paymentMethod,
+        date: d.paidAt || d.createdAt,
+        certIssued: d.taxCertificateIssued ? 'Yes' : 'No',
+        certNo: d.taxCertificateNumber || 'N/A'
+      });
+    });
+
+    // Style header
+    worksheet.getRow(1).font = { bold: true };
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=donations.xlsx');
+
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (error) {
+    console.error('Export donations error:', error);
+    res.status(500).json({ success: false, message: 'Failed to export donations' });
+  }
+});
+
+// Export Donors to Excel
+router.get('/export/donors', async (req, res) => {
+  try {
+    const ExcelJS = require('exceljs');
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Donors');
+
+    worksheet.columns = [
+      { header: 'Name', key: 'name', width: 20 },
+      { header: 'Email', key: 'email', width: 25 },
+      { header: 'Phone', key: 'phone', width: 15 },
+      { header: 'Address', key: 'address', width: 30 },
+      { header: 'City', key: 'city', width: 15 },
+      { header: 'State', key: 'state', width: 15 },
+      { header: 'PAN', key: 'pan', width: 15 },
+      { header: 'Total Donations (INR)', key: 'total', width: 20 },
+      { header: 'Donation Count', key: 'count', width: 15 },
+      { header: 'Last Donation Date', key: 'lastDate', width: 20 }
+    ];
+
+    const donors = await Donor.find().sort({ lastDonationDate: -1 });
+
+    donors.forEach(d => {
+      worksheet.addRow({
+        name: d.name,
+        email: d.email,
+        phone: d.phone,
+        address: d.address || 'N/A',
+        city: d.city || 'N/A',
+        state: d.state || 'N/A',
+        pan: d.pan || 'N/A',
+        total: d.totalAmount / 100,
+        count: d.donationCount,
+        lastDate: d.lastDonationDate
+      });
+    });
+
+    worksheet.getRow(1).font = { bold: true };
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=donors.xlsx');
+
+    await workbook.xlsx.write(res);
+    res.end();
+
+  } catch (error) {
+    console.error('Export donors error:', error);
+    res.status(500).json({ success: false, message: 'Failed to export donors' });
+  }
+});
+
 module.exports = router;

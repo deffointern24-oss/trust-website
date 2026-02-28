@@ -1,19 +1,48 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Heart, 
-  Phone, 
-  Mail, 
-  MapPin, 
-  Facebook, 
-  Twitter, 
-  Linkedin, 
+import { useApi } from "@/lib/api";
+import { toast } from "sonner";
+import {
+  Heart,
+  Phone,
+  Mail,
+  MapPin,
+  Facebook,
+  Twitter,
+  Linkedin,
   Instagram,
-  Send 
+  Send,
+  Loader2
 } from "lucide-react";
 
 const Footer = () => {
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { post } = useApi();
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      toast.error("Please enter your email");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await post('/subscribers/subscribe', { email });
+      if (response.data.success) {
+        toast.success("Thank you for subscribing!");
+        setEmail("");
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Subscription failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <footer className="bg-trust-navy text-white">
       {/* Newsletter Section */}
@@ -24,17 +53,29 @@ const Footer = () => {
             <p className="text-primary-foreground/90 mb-6 max-w-2xl mx-auto">
               Get the latest updates on our educational initiatives, impact stories, and ways to make a difference.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+            <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
               <Input
                 type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
+                required
                 className="bg-white/10 border-white/20 text-white placeholder:text-white/70"
               />
-              <Button variant="secondary" size="lg">
-                <Send className="w-4 h-4 mr-2" />
-                Subscribe
+              <Button
+                variant="secondary"
+                size="lg"
+                type="submit"
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4 mr-2" />
+                )}
+                {loading ? "Subscribing..." : "Subscribe"}
               </Button>
-            </div>
+            </form>
           </div>
         </div>
       </div>
@@ -55,7 +96,7 @@ const Footer = () => {
                 </div>
               </div>
               <p className="text-gray-300 leading-relaxed">
-                Empowering communities through quality education, creating opportunities for lifelong learning, 
+                Empowering communities through quality education, creating opportunities for lifelong learning,
                 and building a brighter future for all.
               </p>
               <div className="flex space-x-4">
@@ -115,7 +156,7 @@ const Footer = () => {
                   <p className="text-gray-300">info@aruleducation.in</p>
                 </div>
               </div>
-              
+
               <Button variant="donate" size="lg" className="mt-6 w-full" asChild>
                 <Link to="/donate">
                   <Heart className="w-4 h-4 mr-2" />

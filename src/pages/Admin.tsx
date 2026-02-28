@@ -29,6 +29,7 @@ import {
   RefreshCw,
   XCircle,
   X,
+  Loader2,
 } from "lucide-react";
 import AdminLogin from "./AdminLogin";
 import { useApi } from "@/lib/api";
@@ -180,6 +181,52 @@ const Admin = () => {
     localStorage.removeItem("admin_token");
     localStorage.removeItem("admin_info");
     setAuthed(false);
+  };
+
+  const handleExportTransactions = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("admin_token");
+      const response = await get('/admin/export/donations', {
+        responseType: 'blob',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `donations_report_${new Date().toISOString().split('T')[0]}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err: any) {
+      setError({ message: 'Failed to export transactions', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExportDonors = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("admin_token");
+      const response = await get('/admin/export/donors', {
+        responseType: 'blob',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `donors_report_${new Date().toISOString().split('T')[0]}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err: any) {
+      setError({ message: 'Failed to export donors', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
   };
 
 
@@ -522,18 +569,33 @@ const Admin = () => {
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
-                  <Select value={filterStatus} onValueChange={setFilterStatus}>
-                    <SelectTrigger className="w-full md:w-48">
-                      <Filter className="w-4 h-4 mr-2" />
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="verified">Verified</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="failed">Failed</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="flex gap-2">
+                    <Select value={filterStatus} onValueChange={setFilterStatus}>
+                      <SelectTrigger className="w-full md:w-48">
+                        <Filter className="w-4 h-4 mr-2" />
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="verified">Verified</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="failed">Failed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      onClick={handleExportTransactions}
+                      disabled={loading}
+                      title="Export all transactions to Excel"
+                    >
+                      {loading ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Download className="w-4 h-4 mr-2" />
+                      )}
+                      {loading ? "Exporting..." : "Export"}
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Transactions Table */}
@@ -736,14 +798,29 @@ const Admin = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Search */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search donors by name or email..."
-                    className="pl-10"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex-1 relative">
+                    <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search donors by name or email..."
+                      className="pl-10"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={handleExportDonors}
+                    disabled={loading}
+                    className="w-full md:w-auto"
+                  >
+                    {loading ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Download className="w-4 h-4 mr-2" />
+                    )}
+                    {loading ? "Exporting..." : "Export Donors"}
+                  </Button>
                 </div>
 
                 {/* Donors Table */}
@@ -1035,18 +1112,6 @@ const Admin = () => {
                       <p className="text-muted-foreground col-span-2">Loading donation types...</p>
                     )}
                   </div>
-                </div>
-
-                {/* Export Options */}
-                <div className="flex gap-2 pt-4 border-t">
-                  <Button variant="outline" className="gap-2">
-                    <Download className="w-4 h-4" />
-                    Export to CSV
-                  </Button>
-                  <Button variant="outline" className="gap-2">
-                    <Download className="w-4 h-4" />
-                    Export to PDF
-                  </Button>
                 </div>
               </CardContent>
             </Card>

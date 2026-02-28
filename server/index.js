@@ -1,8 +1,8 @@
+const connectDB = require('./config/db');
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const connectDB = require('./config/db');
-require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 4242;
@@ -39,12 +39,20 @@ const authRoutes = require('./routes/auth');
 const razorpayRoutes = require('./routes/razorpay');
 const adminRoutes = require('./routes/admin');
 const emailRoutes = require('./routes/email');
+const donationRoutes = require('./routes/donation');
+const subscriberRoutes = require('./routes/subscriberRoutes');
+const initNewsletterCron = require('./services/newsletterCron');
 
 // Register Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/razorpay', razorpayRoutes);
-app.use('/api/admin', adminRoutes); 
+app.use('/api/admin', adminRoutes);
 app.use('/api/email', emailRoutes);
+app.use('/api/donations', donationRoutes);
+app.use('/api/subscribers', subscriberRoutes);
+
+// Initialize Cron Jobs
+initNewsletterCron();
 
 
 // Health Check Route

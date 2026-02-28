@@ -54,8 +54,14 @@
                         },
                         "url": {
                             "raw": "{{base_url}}/api/auth/login",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "auth", "login"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "login"
+                            ]
                         },
                         "description": "Login with admin credentials - Token will be saved automatically"
                     },
@@ -105,10 +111,110 @@
                         },
                         "url": {
                             "raw": "{{base_url}}/api/auth/change-password",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "auth", "change-password"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "change-password"
+                            ]
                         },
                         "description": "Change admin password (uses auto-saved token)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Admin Setup",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Admin\",\n  \"email\": \"admin@gmail.com\",\n  \"password\": \"Admin@123\",\n  \"secretKey\": \"ArulTrust@2024SetupSecretKey\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/auth/setup-admin",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "setup-admin"
+                            ]
+                        },
+                        "description": "One-time setup for admin account using secret key"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Forgot Password",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"admin@gmail.com\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/auth/forgot-password",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "forgot-password"
+                            ]
+                        },
+                        "description": "Request password reset link via email"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Reset Password",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"password\": \"NewStrongPassword@123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/auth/reset-password/:token",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "reset-password",
+                                ":token"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "token",
+                                    "value": ""
+                                }
+                            ]
+                        },
+                        "description": "Reset password using token from email"
                     },
                     "response": []
                 }
@@ -156,8 +262,14 @@
                         },
                         "url": {
                             "raw": "{{base_url}}/api/razorpay/order",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "razorpay", "order"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "razorpay",
+                                "order"
+                            ]
                         },
                         "description": "Create order - Order ID will be saved automatically"
                     },
@@ -198,8 +310,14 @@
                         },
                         "url": {
                             "raw": "{{base_url}}/api/razorpay/verify",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "razorpay", "verify"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "razorpay",
+                                "verify"
+                            ]
                         },
                         "description": "Verify payment (uses auto-saved order_id)"
                     },
@@ -247,8 +365,15 @@
                         },
                         "url": {
                             "raw": "{{base_url}}/api/razorpay/anonymous/order",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "razorpay", "anonymous", "order"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "razorpay",
+                                "anonymous",
+                                "order"
+                            ]
                         }
                     },
                     "response": []
@@ -283,8 +408,15 @@
                         },
                         "url": {
                             "raw": "{{base_url}}/api/razorpay/anonymous/verify",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "razorpay", "anonymous", "verify"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "razorpay",
+                                "anonymous",
+                                "verify"
+                            ]
                         }
                     },
                     "response": []
@@ -310,8 +442,14 @@
                         "method": "GET",
                         "url": {
                             "raw": "{{base_url}}/api/admin/stats",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "admin", "stats"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "admin",
+                                "stats"
+                            ]
                         }
                     }
                 },
@@ -331,8 +469,14 @@
                         "method": "GET",
                         "url": {
                             "raw": "{{base_url}}/api/admin/transactions?page=1&limit=10&status=all&search=",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "admin", "transactions"],
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "admin",
+                                "transactions"
+                            ],
                             "query": [
                                 {
                                     "key": "page",
@@ -370,8 +514,14 @@
                         "method": "GET",
                         "url": {
                             "raw": "{{base_url}}/api/admin/donors?page=1&limit=10",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "admin", "donors"],
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "admin",
+                                "donors"
+                            ],
                             "query": [
                                 {
                                     "key": "page",
@@ -401,8 +551,15 @@
                         "method": "GET",
                         "url": {
                             "raw": "{{base_url}}/api/admin/donors/:donorId",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "admin", "donors", ":donorId"],
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "admin",
+                                "donors",
+                                ":donorId"
+                            ],
                             "variable": [
                                 {
                                     "key": "donorId",
@@ -428,8 +585,15 @@
                         "method": "GET",
                         "url": {
                             "raw": "{{base_url}}/api/admin/certificates/pending",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "admin", "certificates", "pending"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "admin",
+                                "certificates",
+                                "pending"
+                            ]
                         }
                     }
                 },
@@ -449,8 +613,15 @@
                         "method": "GET",
                         "url": {
                             "raw": "{{base_url}}/api/admin/reports/payment-methods",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "admin", "reports", "payment-methods"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "admin",
+                                "reports",
+                                "payment-methods"
+                            ]
                         }
                     }
                 },
@@ -470,8 +641,15 @@
                         "method": "GET",
                         "url": {
                             "raw": "{{base_url}}/api/admin/reports/donation-types",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "admin", "reports", "donation-types"]
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "admin",
+                                "reports",
+                                "donation-types"
+                            ]
                         }
                     }
                 }
@@ -511,8 +689,15 @@
                         "header": [],
                         "url": {
                             "raw": "{{base_url}}/api/email/send-receipt/:donationId",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "email", "send-receipt", ":donationId"],
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "email",
+                                "send-receipt",
+                                ":donationId"
+                            ],
                             "variable": [
                                 {
                                     "key": "donationId",
@@ -555,8 +740,15 @@
                         "header": [],
                         "url": {
                             "raw": "{{base_url}}/api/email/send-certificate/:donationId",
-                            "host": ["{{base_url}}"],
-                            "path": ["api", "email", "send-certificate", ":donationId"],
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "email",
+                                "send-certificate",
+                                ":donationId"
+                            ],
                             "variable": [
                                 {
                                     "key": "donationId",
@@ -592,8 +784,13 @@
                 "header": [],
                 "url": {
                     "raw": "{{base_url}}/api/health",
-                    "host": ["{{base_url}}"],
-                    "path": ["api", "health"]
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "health"
+                    ]
                 }
             },
             "response": []

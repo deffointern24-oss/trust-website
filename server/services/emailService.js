@@ -1,48 +1,25 @@
-const SibApiV3Sdk = require('@sendinblue/client');
-
-// Initialize Brevo client
-const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-apiInstance.setApiKey(
-    SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey,
-    process.env.BREVO_API_KEY
-);
+const sendEmail = require('./sendEmail');
 
 // Helper function to format currency
 const formatCurrency = (amountInPaise) => {
-    return `₹${(amountInPaise / 100).toLocaleString('en-IN')}`;
+  return `₹${(amountInPaise / 100).toLocaleString('en-IN')}`;
 };
 
 // Helper function to format date
 const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-IN', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
+  return new Date(date).toLocaleDateString('en-IN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 };
 
 // Send Donation Receipt Email
 const sendDonationReceipt = async (donation, donor) => {
-    try {
-        const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-
-        sendSmtpEmail.sender = {
-            name: process.env.BREVO_SENDER_NAME || 'Arul Trust',
-            email: process.env.BREVO_SENDER_EMAIL
-        };
-
-        sendSmtpEmail.to = [
-            {
-                email: donor.email,
-                name: donor.name
-            }
-        ];
-
-        sendSmtpEmail.subject = `Thank You for Your Donation - Receipt #${donation.razorpay_order_id}`;
-
-        sendSmtpEmail.htmlContent = `
+  try {
+    const htmlContent = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -90,23 +67,15 @@ const sendDonationReceipt = async (donation, donor) => {
         <h3 style="margin-top: 0; color: #667eea;">Transaction Details</h3>
         <div class="detail-row">
           <span class="detail-label">Receipt Number:</span>
-          <span class="detail-value">${donation.razorpay_order_id}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Payment ID:</span>
-          <span class="detail-value">${donation.razorpay_payment_id}</span>
+          <span class="detail-value">${donation.orderId || donation.razorpay_order_id}</span>
         </div>
         <div class="detail-row">
           <span class="detail-label">Amount:</span>
           <span class="detail-value">${formatCurrency(donation.amount)}</span>
         </div>
         <div class="detail-row">
-          <span class="detail-label">Payment Method:</span>
-          <span class="detail-value">${donation.paymentMethod.toUpperCase()}</span>
-        </div>
-        <div class="detail-row">
           <span class="detail-label">Date & Time:</span>
-          <span class="detail-value">${formatDate(donation.paidAt)}</span>
+          <span class="detail-value">${formatDate(donation.paidAt || new Date())}</span>
         </div>
         <div class="detail-row" style="border-bottom: none;">
           <span class="detail-label">Status:</span>
@@ -114,26 +83,13 @@ const sendDonationReceipt = async (donation, donor) => {
         </div>
       </div>
       
-      ${donation.taxCertificateRequired ? `
-      <div style="background: #e7f3ff; padding: 15px; border-radius: 5px; margin: 20px 0;">
-        <strong>📄 Tax Certificate (80G):</strong> Your tax exemption certificate will be sent to you within 3-5 business days.
-      </div>
-      ` : ''}
-      
       <div style="text-align: center; margin: 30px 0;">
         <a href="${process.env.TRUST_WEBSITE || 'https://arultrust.org'}" class="button">Visit Our Website</a>
       </div>
-      
-      <p style="font-size: 14px; color: #666; margin-top: 30px;">
-        This is an automated receipt for your donation. Please keep this email for your tax records.
-      </p>
     </div>
     
     <div class="footer">
       <p style="margin: 5px 0;"><strong>${process.env.TRUST_NAME || 'Arul Education Trust'}</strong></p>
-      <p style="margin: 5px 0;">${process.env.TRUST_ADDRESS || 'Trust Address'}</p>
-      <p style="margin: 5px 0;">📧 ${process.env.TRUST_EMAIL || 'info@arultrust.org'} | 📞 ${process.env.TRUST_PHONE || '+91 123 456 7890'}</p>
-      <p style="margin: 5px 0;">Registration No: ${process.env.TRUST_REGISTRATION || 'N/A'}</p>
       <p style="margin: 15px 0 5px 0; font-size: 12px;">
         © ${new Date().getFullYear()} ${process.env.TRUST_NAME || 'Arul Trust'}. All rights reserved.
       </p>
@@ -141,39 +97,25 @@ const sendDonationReceipt = async (donation, donor) => {
   </div>
 </body>
 </html>
-    `;
+        `;
 
-        // Send email
-        const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
-        console.log('Receipt email sent successfully:', result);
-        return { success: true, messageId: result.messageId };
+    return await sendEmail({
+      email: donor.email,
+      name: donor.name,
+      subject: `Thank You for Your Donation - Receipt #${donation.orderId || donation.razorpay_order_id}`,
+      html: htmlContent
+    });
 
-    } catch (error) {
-        console.error('Error sending receipt email:', error);
-        throw error;
-    }
+  } catch (error) {
+    console.error('Error sending receipt email:', error);
+    throw error;
+  }
 };
 
 // Send Tax Certificate Email
 const sendTaxCertificate = async (donation, donor, certificateNumber) => {
-    try {
-        const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-
-        sendSmtpEmail.sender = {
-            name: process.env.BREVO_SENDER_NAME || 'Arul Trust',
-            email: process.env.BREVO_SENDER_EMAIL
-        };
-
-        sendSmtpEmail.to = [
-            {
-                email: donor.email,
-                name: donor.name
-            }
-        ];
-
-        sendSmtpEmail.subject = `80G Tax Exemption Certificate - ${certificateNumber}`;
-
-        sendSmtpEmail.htmlContent = `
+  try {
+    const htmlContent = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -213,41 +155,17 @@ const sendTaxCertificate = async (donation, donor, certificateNumber) => {
           <strong>Donor Name:</strong> ${donor.name}
         </div>
         <div class="detail-row">
-          <strong>PAN Number:</strong> ${donor.pan || 'Not Provided'}
-        </div>
-        <div class="detail-row">
           <strong>Amount Donated:</strong> ${formatCurrency(donation.amount)}
         </div>
         <div class="detail-row">
-          <strong>Date of Donation:</strong> ${formatDate(donation.paidAt)}
-        </div>
-        <div class="detail-row">
-          <strong>Receipt Number:</strong> ${donation.razorpay_order_id}
-        </div>
-        <div class="detail-row" style="border-bottom: none;">
-          <strong>Financial Year:</strong> ${new Date(donation.paidAt).getFullYear()}-${new Date(donation.paidAt).getFullYear() + 1}
+          <strong>Date of Donation:</strong> ${formatDate(donation.paidAt || new Date())}
         </div>
       </div>
-      
-      <div style="background: #e7f3ff; padding: 15px; border-radius: 5px; margin: 20px 0;">
-        <strong>ℹ️ Important Information:</strong>
-        <ul style="margin: 10px 0; padding-left: 20px;">
-          <li>This certificate is valid for claiming deduction under Section 80G</li>
-          <li>Registration Number: ${process.env.TRUST_REGISTRATION || 'N/A'}</li>
-          <li>Please retain this certificate for your tax filing</li>
-          <li>50% of the donated amount is eligible for deduction</li>
-        </ul>
-      </div>
-      
-      <p style="margin-top: 30px;">If you have any questions, please contact us at ${process.env.TRUST_EMAIL || 'info@arultrust.org'}</p>
       
       <p style="margin-top: 30px;">With warm regards,<br><strong>${process.env.TRUST_NAME || 'Arul Trust'}</strong></p>
     </div>
     
     <div class="footer">
-      <p style="margin: 5px 0;"><strong>${process.env.TRUST_NAME || 'Arul Education Trust'}</strong></p>
-      <p style="margin: 5px 0;">${process.env.TRUST_ADDRESS || 'Trust Address'}</p>
-      <p style="margin: 5px 0;">📧 ${process.env.TRUST_EMAIL || 'info@arultrust.org'}</p>
       <p style="margin: 15px 0 5px 0; font-size: 12px;">
         © ${new Date().getFullYear()} ${process.env.TRUST_NAME || 'Arul Trust'}. All rights reserved.
       </p>
@@ -255,38 +173,25 @@ const sendTaxCertificate = async (donation, donor, certificateNumber) => {
   </div>
 </body>
 </html>
-    `;
+        `;
 
-        const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
-        console.log('Tax certificate email sent successfully:', result);
-        return { success: true, messageId: result.messageId };
+    return await sendEmail({
+      email: donor.email,
+      name: donor.name,
+      subject: `80G Tax Exemption Certificate - ${certificateNumber}`,
+      html: htmlContent
+    });
 
-    } catch (error) {
-        console.error('Error sending tax certificate email:', error);
-        throw error;
-    }
+  } catch (error) {
+    console.error('Error sending tax certificate email:', error);
+    throw error;
+  }
 };
 
 // Send Welcome Email to New Donor
 const sendWelcomeEmail = async (donor) => {
-    try {
-        const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-
-        sendSmtpEmail.sender = {
-            name: process.env.BREVO_SENDER_NAME || 'Arul Trust',
-            email: process.env.BREVO_SENDER_EMAIL
-        };
-
-        sendSmtpEmail.to = [
-            {
-                email: donor.email,
-                name: donor.name
-            }
-        ];
-
-        sendSmtpEmail.subject = `Welcome to ${process.env.TRUST_NAME || 'Arul Trust'} Family!`;
-
-        sendSmtpEmail.htmlContent = `
+  try {
+    const htmlContent = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -310,33 +215,92 @@ const sendWelcomeEmail = async (donor) => {
       
       <p>Welcome to the ${process.env.TRUST_NAME || 'Arul Trust'} family! We are honored to have you as a supporter of our mission to provide quality education to underprivileged students.</p>
       
-      <p>Your generosity will help us continue making a positive impact in the lives of countless students who dream of a better future through education.</p>
-      
-      <p>Stay connected with us to see the impact of your contribution and be part of our journey to transform lives through education.</p>
-      
       <p style="margin-top: 30px;">With gratitude,<br><strong>${process.env.TRUST_NAME || 'Arul Trust'} Team</strong></p>
     </div>
     
     <div class="footer">
-      <p style="margin: 5px 0;">${process.env.TRUST_EMAIL || 'info@arultrust.org'} | ${process.env.TRUST_PHONE || '+91 123 456 7890'}</p>
+      <p style="margin: 5px 0;">${process.env.TRUST_EMAIL || 'info@arultrust.org'}</p>
     </div>
   </div>
 </body>
 </html>
-    `;
+        `;
 
-        const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
-        console.log('Welcome email sent successfully:', result);
-        return { success: true, messageId: result.messageId };
+    return await sendEmail({
+      email: donor.email,
+      name: donor.name,
+      subject: `Welcome to ${process.env.TRUST_NAME || 'Arul Trust'} Family!`,
+      html: htmlContent
+    });
 
-    } catch (error) {
-        console.error('Error sending welcome email:', error);
-        throw error;
-    }
+  } catch (error) {
+    console.error('Error sending welcome email:', error);
+    throw error;
+  }
+};
+
+// Send Password Reset Email
+const sendPasswordResetEmail = async (admin, resetUrl) => {
+  try {
+    const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; }
+    .button { display: inline-block; background: #ff416c !important; color: white !important; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }
+    .footer { background: #f5f5f5; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; font-size: 14px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔐 Password Reset Request</h1>
+    </div>
+    
+    <div class="content">
+      <p>Hello <strong>${admin.name}</strong>,</p>
+      
+      <p>You are receiving this email because a password reset request was made for your account.</p>
+      
+      <div style="text-align: center;">
+        <a href="${resetUrl}" class="button">Reset Password</a>
+      </div>
+      
+      <p>If the button doesn't work, copy and paste this link:</p>
+      <p style="word-break: break-all; color: #ff416c;">${resetUrl}</p>
+      
+      <p><strong>Note:</strong> This link will expire in 30 minutes.</p>
+    </div>
+    
+    <div class="footer">
+      <p>Arul Education Trust</p>
+    </div>
+  </div>
+</body>
+</html>
+        `;
+
+    return await sendEmail({
+      email: admin.email,
+      name: admin.name,
+      subject: 'Password Reset Request',
+      html: htmlContent
+    });
+
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    throw error;
+  }
 };
 
 module.exports = {
-    sendDonationReceipt,
-    sendTaxCertificate,
-    sendWelcomeEmail
+  sendDonationReceipt,
+  sendTaxCertificate,
+  sendWelcomeEmail,
+  sendPasswordResetEmail
 };

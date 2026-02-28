@@ -25,6 +25,8 @@ const adminSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  resetPasswordToken: String,
+  resetPasswordExpire: Date,
   lastLogin: {
     type: Date
   },
@@ -36,8 +38,26 @@ const adminSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Generate password reset token
+adminSchema.methods.getResetPasswordToken = function () {
+  const crypto = require('crypto');
+  // Generate token
+  const resetToken = crypto.randomBytes(20).toString('hex');
+
+  // Hash and set to resetPasswordToken field
+  this.resetPasswordToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+
+  // Set expire
+  this.resetPasswordExpire = Date.now() + 30 * 60 * 1000; // 30 minutes
+
+  return resetToken;
+};
+
 // Compare password method
-adminSchema.methods.comparePassword = async function(candidatePassword) {
+adminSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
